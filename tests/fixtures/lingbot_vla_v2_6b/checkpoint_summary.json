@@ -1,0 +1,243 @@
+{
+  "hf_repo_id": "robbyant/lingbot-vla-v2-6b",
+  "revision": "11c703bf6a5c1f45b3b69168482da11fdbba53d7",
+  "source": "model.safetensors.index.json + safetensors header (first 256 KiB per shard fetched via HTTP Range; no full weights downloaded)",
+  "total_size_bytes": 25503630044,
+  "weight_dtype": "float32",
+  "layer_counts": {
+    "backbone": 36,
+    "vision": 24,
+    "action_expert": 36,
+    "deepstack_mergers": 3
+  },
+  "tensors": {
+    "model.action_in_proj.bias": [
+      768
+    ],
+    "model.action_in_proj.weight": [
+      768,
+      55
+    ],
+    "model.action_out_proj.bias": [
+      55
+    ],
+    "model.action_out_proj.weight": [
+      55,
+      768
+    ],
+    "model.action_time_mlp_in.bias": [
+      768
+    ],
+    "model.action_time_mlp_in.weight": [
+      768,
+      1536
+    ],
+    "model.action_time_mlp_out.bias": [
+      768
+    ],
+    "model.action_time_mlp_out.weight": [
+      768,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.input_layernorm.beta.bias": [
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.input_layernorm.gamma.weight": [
+      768,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.input_layernorm.weight": [
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.experts.down_proj": [
+      32,
+      768,
+      512
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.experts.gate_proj": [
+      32,
+      512,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.experts.up_proj": [
+      32,
+      512,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.gate.weight": [
+      32,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.shared_expert.down_proj.weight": [
+      768,
+      704
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.shared_expert.gate_proj.weight": [
+      704,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.mlp.shared_expert.up_proj.weight": [
+      704,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.post_attention_layernorm.beta.weight": [
+      768,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.post_attention_layernorm.gamma.bias": [
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.post_attention_layernorm.gamma.weight": [
+      768,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.post_attention_layernorm.weight": [
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.k_proj.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.k_proj.weight": [
+      1024,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.o_proj.weight": [
+      768,
+      4096
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.q_proj.bias": [
+      4096
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.q_proj.weight": [
+      4096,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.v_proj.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.layers.0.self_attn.v_proj.weight": [
+      1024,
+      768
+    ],
+    "model.qwenvl_with_expert.qwen_expert.model.norm.weight": [
+      768
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.embed_tokens.weight": [
+      151936,
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.input_layernorm.weight": [
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.mlp.gate_proj.weight": [
+      9728,
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.post_attention_layernorm.weight": [
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.self_attn.k_proj.weight": [
+      1024,
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.self_attn.o_proj.weight": [
+      2560,
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.self_attn.q_norm.weight": [
+      128
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.self_attn.q_proj.weight": [
+      4096,
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.layers.0.self_attn.v_proj.weight": [
+      1024,
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.language_model.norm.weight": [
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.attn.proj.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.attn.proj.weight": [
+      1024,
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.attn.qkv.weight": [
+      3072,
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.mlp.linear_fc1.bias": [
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.mlp.linear_fc1.weight": [
+      4096,
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.mlp.linear_fc2.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.mlp.linear_fc2.weight": [
+      1024,
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.norm1.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.norm1.weight": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.blocks.0.norm2.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.deepstack_merger_list.0.linear_fc1.bias": [
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.deepstack_merger_list.0.linear_fc1.weight": [
+      4096,
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.deepstack_merger_list.0.linear_fc2.bias": [
+      2560
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.deepstack_merger_list.0.norm.weight": [
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.merger.linear_fc1.bias": [
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.merger.linear_fc1.weight": [
+      4096,
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.merger.linear_fc2.weight": [
+      2560,
+      4096
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.merger.norm.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.merger.norm.weight": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.patch_embed.proj.bias": [
+      1024
+    ],
+    "model.qwenvl_with_expert.qwenvl.model.visual.patch_embed.proj.weight": [
+      1024,
+      3,
+      2,
+      16,
+      16
+    ],
+    "model.state_proj.bias": [
+      768
+    ],
+    "model.state_proj.weight": [
+      768,
+      55
+    ]
+  }
+}

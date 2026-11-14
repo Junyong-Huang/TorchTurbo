@@ -9,16 +9,29 @@ No model weights are downloaded or instantiated.
 from __future__ import annotations
 
 import copy
+import inspect
 import json
 from pathlib import Path
 
 import pytest
 import yaml
 
+from torchturbo.models.base import TurboModel, TurboVLMModel
 from torchturbo.models.lingbot_vla_v2_6b.capabilities import (
     CapabilityParseError,
     load_capabilities,
     parse_capabilities,
+)
+from torchturbo.models.lingbot_vla_v2_6b.contract import (
+    CONFIG_FIELDS,
+    CONTRACT_CONSTANTS,
+    CONTRACT_HOOKS,
+    MODULE_PATHS,
+    MULTIMODAL_INPUT_KEYS,
+    PACKED_INPUT_KEYS,
+    PARAMETER_GROUP_PATHS,
+    VLA_INPUT_KEYS,
+    resolve_path,
 )
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "lingbot_vla_v2_6b"
@@ -54,6 +67,7 @@ def test_model_identity(capabilities):
     assert capabilities.model_key == "lingbot_vla_v2_6b"
     assert capabilities.hf_repo_id == "robbyant/lingbot-vla-v2-6b"
     assert capabilities.vlm_family == "qwen3_vl"
+    assert capabilities.config_key == "LingbotVLAV2Config"
     assert capabilities.hf_revision == (
         "11c703bf6a5c1f45b3b69168482da11fdbba53d7"
     )
@@ -217,3 +231,86 @@ def test_parse_does_not_mutate_sources():
     snapshot = copy.deepcopy(sources)
     parse_capabilities(**sources)
     assert sources == snapshot
+
+
+def _normalize(value, transform):
+    if transform == "tuple":
+        return list(value)
+    if transform == "sum_joint_dims":
+        return sum(dim for entry in value for dim in entry.values())
+    if isinstance(value, tuple):
+        return list(value)
+    return value
+
+
+def test_contract_config_fields_match_capabilities(capabilities):
+    sources = _sources()
+    mismatches = {}
+    for field in CONFIG_FIELDS:
+        if field.source == "default":
+            raw_value = field.default_value
+        else:
+            raw_value = resolve_path(sources[field.source], field.path)
+        source_value = _normalize(raw_value, field.transform)
+        capability_value = _normalize(resolve_path(capabilities, field.capability), None)
+        if source_value != capability_value:
+            mismatches[f"{field.source}:{field.path}"] = (
+                source_value,
+                capability_value,
+            )
+    assert not mismatches
+
+
+def test_contract_hooks_cover_base_api():
+    base_hooks = set()
+    for cls in (TurboModel, TurboVLMModel):
+        for name, member in inspect.getmembers(cls):
+            if callable(member) and name.startswith(("get_", "on_", "register_", "init_")):
+                base_hooks.add(name)
+
+    mapped = {hook.hook for hook in CONTRACT_HOOKS}
+    assert mapped == base_hooks
+
+
+def test_contract_module_paths_exist_in_checkpoint():
+    tensors = _read_json("checkpoint_summary.json")["tensors"]
+    missing = {
+        name: path
+        for name, path in MODULE_PATHS.items()
+        if not any(key.startswith(path + ".") for key in tensors)
+    }
+    assert not missing
+
+
+def test_parameter_groups_cover_primary_modules():
+    covered = [path for paths in PARAMETER_GROUP_PATHS.values() for path in paths]
+    uncovered = [
+        path
+        for path in MODULE_PATHS.values()
+        if not any(path == group or path.startswith(group + ".") for group in covered)
+    ]
+    assert not uncovered
+
+
+def test_contract_constants_match_capabilities(capabilities):
+    assert CONTRACT_CONSTANTS["num_backbone_layers"] == capabilities.backbone.num_hidden_layers
+    assert (
+        CONTRACT_CONSTANTS["num_action_expert_layers"]
+        == capabilities.action_expert.num_hidden_layers
+    )
+    assert CONTRACT_CONSTANTS["sp_size"] == capabilities.training.ulysses_parallel_size == 1
+    assert CONTRACT_CONSTANTS["ep_size"] == 1
+    assert (
+        CONTRACT_CONSTANTS["gpu_moe_implementation"]
+        == capabilities.action_expert.moe_implementation
+    )
+    assert CONTRACT_CONSTANTS["use_lm_head"] is False
+    assert CONTRACT_CONSTANTS["is_diffusion_model"] is False
+
+
+def test_contract_vla_inputs_cover_packed_and_media_contract():
+    # base.on_prepare_inputs requires cu_seq_lens_q/k and rejects attention_mask.
+    assert {"cu_seq_lens_q", "cu_seq_lens_k"} <= set(PACKED_INPUT_KEYS)
+    assert "attention_mask" not in PACKED_INPUT_KEYS
+    assert {"pixel_values", "image_grid_thw"} <= set(MULTIMODAL_INPUT_KEYS)
+    assert {"state", "actions"} <= set(VLA_INPUT_KEYS)

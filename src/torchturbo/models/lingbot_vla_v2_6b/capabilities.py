@@ -212,6 +212,7 @@ class LingbotVLAV2Capabilities:
     hf_repo_id: str
     hf_revision: str
     vlm_family: str
+    config_key: str
     backbone: BackboneCapabilities
     action_expert: ActionExpertCapabilities
     action_head: ActionHeadCapabilities
@@ -282,8 +283,8 @@ def parse_capabilities(
         )
 
     model_section = _section(official_config, "model")
-    config_key = model_section.get("config_key")
-    if config_key is not None and config_key != "LingbotVLAV2Config":
+    config_key = model_section.get("config_key") or "LingbotVLAV2Config"
+    if config_key != "LingbotVLAV2Config":
         raise CapabilityParseError(
             f"Unsupported model.config_key {config_key!r}; the V2 checkpoint "
             "requires LingbotVLAV2Config."
@@ -331,6 +332,7 @@ def parse_capabilities(
         hf_repo_id=HF_REPO_ID,
         hf_revision=HF_REVISION,
         vlm_family=str(vlm_family),
+        config_key=str(config_key),
         backbone=backbone,
         action_expert=action_expert,
         action_head=action_head,

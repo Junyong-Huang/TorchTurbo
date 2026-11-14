@@ -190,6 +190,14 @@ apply.
 8. **No full weights.** Numeric alignment uses random initialization; only
    config metadata is fetched.
 
+## Contract mapping
+
+`LingbotVLAV2Config` is selected by `model.config_key` in the V2 YAML and is
+parsed as `capabilities.config_key`. The mapping from every parsed field and
+checkpoint module path to the `TurboModel` / `TurboVLMModel` contract is in
+`turbo_model_contract_mapping.md`; the machine-readable version is
+`src/torchturbo/models/lingbot_vla_v2_6b/contract.py`.
+
 ## Fixtures
 
 `tests/fixtures/lingbot_vla_v2_6b/` contains the evidence consumed by the

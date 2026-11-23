@@ -26,6 +26,7 @@ from typing import Any
 import torch
 from torch import nn
 from transformers import AutoModel, PreTrainedModel
+from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.models.qwen3_vl.modeling_qwen3_vl import (
     Qwen3VLForConditionalGeneration,
     Qwen3VLTextModel,
@@ -127,6 +128,66 @@ class TurboLingbotVLAV2ForConditionalGeneration(TurboVLMModel, PreTrainedModel):
         super().__init__(config)
         self.model = LingbotVLAV2Model(config)
         self.post_init()
+
+    def forward(
+        self,
+        input_ids: torch.LongTensor | None = None,
+        attention_mask: torch.Tensor | None = None,
+        position_ids: torch.LongTensor | None = None,
+        pixel_values: torch.Tensor | None = None,
+        pixel_values_videos: torch.Tensor | None = None,
+        image_grid_thw: torch.LongTensor | None = None,
+        video_grid_thw: torch.LongTensor | None = None,
+        **kwargs: Any,
+    ) -> CausalLMOutputWithPast:
+        """Run the Qwen3-VL backbone and return tied-embedding logits.
+
+        The checkpoint has no ``lm_head``; the language embedding matrix is
+        tied, so logits are the backbone hidden states projected with the
+        input embedding. Media tensors are fused by the Qwen3-VL model before
+        the text stack, so they are forwarded unchanged.
+
+        Packed flash-attention metadata (``cu_seq_lens_q/k`` and
+        ``max_length_q/k``) is forwarded through ``**kwargs`` for the GPU
+        training path. The CPU acceptance path uses a padded attention mask,
+        which eager attention consumes directly.
+
+        Args:
+            input_ids: Token IDs shaped ``[batch, seq]`` or packed ``[1, seq]``.
+            attention_mask: Padded attention mask, or packed boundaries via
+                the flash-attention kwargs.
+            position_ids: Optional mRoPE positions; derived by Qwen3-VL when
+                omitted.
+            pixel_values: Patch tensor for images.
+            pixel_values_videos: Patch tensor for videos.
+            image_grid_thw: Image grid metadata.
+            video_grid_thw: Video grid metadata.
+            **kwargs: Extra backbone arguments, including packed flash
+                attention metadata.
+
+        Returns:
+            Logits and optional hidden states of the backbone.
+        """
+        backbone = self.model.qwenvl_with_expert.qwenvl.model
+        outputs = backbone(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            pixel_values=pixel_values,
+            pixel_values_videos=pixel_values_videos,
+            image_grid_thw=image_grid_thw,
+            video_grid_thw=video_grid_thw,
+            **kwargs,
+        )
+        hidden_states = outputs.last_hidden_state
+        logits = torch.matmul(
+            hidden_states, self.get_input_embeddings().weight.t()
+        )
+        return CausalLMOutputWithPast(
+            logits=logits,
+            hidden_states=outputs.hidden_states,
+            past_key_values=outputs.past_key_values,
+        )
 
     @classmethod
     @contextmanager

@@ -186,3 +186,21 @@ def test_on_materialized_rebuilds_rotary_buffers(model):
     model.on_materialized()
     assert rotary.inv_freq.shape == before.shape
     assert torch.equal(rotary.inv_freq, before)
+
+
+def test_forward_projects_tied_embedding_logits(model):
+    input_ids = torch.randint(0, 128, (2, 8))
+    attention_mask = torch.ones_like(input_ids)
+    output = model(input_ids=input_ids, attention_mask=attention_mask)
+
+    assert output.logits.shape == (2, 8, 128)
+    assert torch.isfinite(output.logits).all()
+    assert output.logits.abs().max() > 0
+
+    hidden_states = (
+        model.model.qwenvl_with_expert.qwenvl.model(
+            input_ids=input_ids, attention_mask=attention_mask
+        ).last_hidden_state
+    )
+    expected = hidden_states @ model.get_input_embeddings().weight.t()
+    assert torch.allclose(output.logits, expected)

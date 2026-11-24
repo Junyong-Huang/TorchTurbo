@@ -204,3 +204,44 @@ def test_forward_projects_tied_embedding_logits(model):
     )
     expected = hidden_states @ model.get_input_embeddings().weight.t()
     assert torch.allclose(output.logits, expected)
+
+
+def test_encode_state_projects_padded_joint_state(model):
+    state = torch.randn(2, model.config.max_state_dim)
+    features = model.encode_state(state)
+    assert features.shape == (2, model.config.expert_hidden_size)
+    assert torch.isfinite(features).all()
+
+    features.sum().backward()
+    grad = model.model.state_proj.weight.grad
+    assert grad is not None
+    assert grad.abs().sum() > 0
+    model.model.state_proj.weight.grad = None
+
+    with pytest.raises(ValueError, match="max_state_dim"):
+        model.encode_state(torch.randn(2, model.config.joint_state_dim))
+
+
+def test_prepare_inputs_preserves_vla_fields(model):
+    inputs = {
+        "input_ids": torch.tensor([[1, 2, 3, 4]]),
+        "cu_seq_lens_q": torch.tensor([0, 4]),
+        "cu_seq_lens_k": torch.tensor([0, 4]),
+        "max_length_q": 4,
+        "max_length_k": 4,
+    }
+    state = torch.randn(1, model.config.max_state_dim)
+    actions = torch.randn(1, model.config.chunk_size, model.config.max_action_dim)
+    source_inputs = {
+        "state": state,
+        "actions": actions,
+        "pixel_values": torch.randn(2, 3, 16, 16),
+        "image_grid_thw": torch.tensor([[1, 1, 2]]),
+    }
+
+    prepared = model.on_prepare_inputs(inputs, source_inputs=source_inputs)
+
+    assert prepared is inputs
+    assert prepared["state"] is state
+    assert prepared["actions"] is actions
+    assert prepared["pixel_values"] is source_inputs["pixel_values"]

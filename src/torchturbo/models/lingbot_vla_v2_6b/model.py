@@ -54,6 +54,15 @@ MULTIMODAL_INPUT_KEYS = (
     "video_grid_thw",
 )
 
+# VLA batch fields outside the packed text contract. The collator pads the
+# joint state to max_state_dim and the action head consumes the action tensors,
+# so both must survive the engine's packed-input transforms.
+VLA_INPUT_KEYS = (
+    "state",
+    "actions",
+    "actions_mask",
+)
+
 
 class QwenVLWithExpert(nn.Module):
     """Checkpoint container for the VLM backbone and the action expert.
@@ -115,6 +124,7 @@ class TurboLingbotVLAV2ForConditionalGeneration(TurboVLMModel, PreTrainedModel):
     config_class = LingbotVLAV2Config
     base_model_prefix = "model"
     multimodal_input_keys = MULTIMODAL_INPUT_KEYS
+    vla_input_keys = VLA_INPUT_KEYS
     vision_tower_module_names = (VISION_PREFIX,)
     multi_modal_projector_module_names = (
         f"{VISION_PREFIX}.merger",
@@ -188,6 +198,46 @@ class TurboLingbotVLAV2ForConditionalGeneration(TurboVLMModel, PreTrainedModel):
             hidden_states=outputs.hidden_states,
             past_key_values=outputs.past_key_values,
         )
+
+    def encode_state(self, state: torch.Tensor) -> torch.Tensor:
+        """Project padded joint state to the action-expert hidden width.
+
+        The VLA collator pads raw joint state (``joint_state_dim``) to the
+        checkpoint ``max_state_dim``; ``state_proj`` then maps each sample to
+        ``expert_hidden_size`` for the action expert.
+
+        Args:
+            state: Joint state shaped ``[..., max_state_dim]``.
+
+        Returns:
+            Projected state shaped ``[..., expert_hidden_size]``.
+        """
+        if state.shape[-1] != self.config.max_state_dim:
+            raise ValueError(
+                "state last dimension must be max_state_dim="
+                f"{self.config.max_state_dim}, got {state.shape[-1]}"
+            )
+        return self.model.state_proj(state)
+
+    def on_prepare_inputs(
+        self,
+        inputs: dict[str, Any],
+        *,
+        source_inputs: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Keep VLA fields alongside the media tensors.
+
+        ``TurboVLMModel`` preserves media tensors before the engine pads and
+        slices the packed text row. Joint state and action supervision are not
+        part of the text row either, so they are copied from the original
+        batch the same way.
+        """
+        inputs = super().on_prepare_inputs(inputs, source_inputs=source_inputs)
+        if source_inputs is not None:
+            for key in self.vla_input_keys:
+                if key in source_inputs:
+                    inputs[key] = source_inputs[key]
+        return inputs
 
     @classmethod
     @contextmanager
@@ -308,6 +358,8 @@ class TurboLingbotVLAV2ForConditionalGeneration(TurboVLMModel, PreTrainedModel):
 
 __all__ = [
     "LingbotVLAV2Model",
+    "MULTIMODAL_INPUT_KEYS",
     "QwenVLWithExpert",
     "TurboLingbotVLAV2ForConditionalGeneration",
+    "VLA_INPUT_KEYS",
 ]
